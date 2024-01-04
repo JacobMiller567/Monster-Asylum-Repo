@@ -13,7 +13,6 @@ public class SecuritySystem : MonoBehaviour
     [SerializeField] private GameObject ZoomCamera;
     [SerializeField] private GameObject textPopup;
     public Camera PlayerView;
-    private bool zoomCamera = true;
 
     void OnTriggerEnter(Collider other)
     {
@@ -55,7 +54,6 @@ public class SecuritySystem : MonoBehaviour
 
             if (Input.GetKeyDown(KeyCode.E))
             {
-
                 ZoomCamera.SetActive(true);
                 PlayerCamera.SetActive(false);
                 textPopup.SetActive(false);

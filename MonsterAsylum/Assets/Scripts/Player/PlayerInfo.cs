@@ -37,22 +37,6 @@ public class PlayerInfo : MonoBehaviour
                 other.gameObject.GetComponent<Doors>().OpenMainDoor();
             }
         }
-        /*
-        if (UtilityKey == true)
-        {
-            if (other.gameObject.CompareTag("Door") && other != null)
-            {
-                other.gameObject.GetComponent<Doors>().OpenUtilityDoor();
-            }
-        }
-        if (MasterKey == true)
-        {
-            if (other.gameObject.CompareTag("Door") && other != null)
-            {
-                other.gameObject.GetComponent<Doors>().OpenMainDoor();
-            }
-        }
-        */
     }
 
 

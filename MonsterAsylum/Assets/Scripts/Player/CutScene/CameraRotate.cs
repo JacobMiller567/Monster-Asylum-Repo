@@ -18,7 +18,6 @@ public class CameraRotate : MonoBehaviour
 
     private void Update()
     {
-        // even if frame rate is high makes it so that camera doesn't change speeds
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity * Time.deltaTime;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity * Time.deltaTime;
 

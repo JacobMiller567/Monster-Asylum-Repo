@@ -94,7 +94,7 @@ public class MusicManager : MonoBehaviour
         } 
 
     }
-    public void JumpScareToggle() // TEST? Might now work if camera is disabled
+    public void JumpScareToggle() 
     {
         if (playSound)
         {
@@ -227,8 +227,6 @@ public class MusicManager : MonoBehaviour
         MuteEnemy(muted);
         MuteJumpScare(muted);
         MuteFootsteps(muted);
-
-
     }
 
     public void DisableLightFlicker(bool on)

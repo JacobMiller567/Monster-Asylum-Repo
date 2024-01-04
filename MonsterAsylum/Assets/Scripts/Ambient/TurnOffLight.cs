@@ -16,7 +16,6 @@ public class TurnOffLight : MonoBehaviour
     [SerializeField] private MainMenu menu;
 
 
-
     public void Update()
     {
         if (animationPlayed == false)

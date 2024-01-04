@@ -46,7 +46,6 @@ public class Item : MonoBehaviour
                     activeText = true;
                     Player.GetComponent<PlayerMovement>().inKeyRadius = true;
                     InteractText.SetActive(activeText);
-                    //Debug.Log("Key is Here");
 
                     if (Player.GetComponent<PlayerInfo>().MasterKey == true)
                     {
@@ -90,29 +89,4 @@ public class Item : MonoBehaviour
             }
         }
     }
-
-
-
-
-
-
-
-/*
-    private bool InPlayersView(PlayerMovement player)
-    {
-        Vector3 Direction = (player.transform.position - transform.position).normalized;
-        if (Vector3.Dot(transform.forward, Direction) >= Mathf.Cos(fieldOfView))
-        {
-            RaycastHit hit;
-            if (Physics.Raycast(transform.position, Direction, out hit, collider.radius, lineOfSightLayer))
-            {
-                if (hit.transform.GetComponent<PlayerMovement>() != null)
-                {
-                    // Check if player is looking at key
-                }  
-            }
-        }
-        return false;
-    }
-    */
 }

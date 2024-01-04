@@ -11,8 +11,8 @@ public class PlayerMovement : MonoBehaviour
     [SerializeField] private float jumpHeight = 4f;
     [SerializeField] private float sprint = 10f;
     [SerializeField] private float crouchSpeed = 2.5f;
-    [SerializeField] private float crouchAmount = 0.25f; // Amount we will crouch
-    private float gravity = -9.81f;  // default gravity
+    [SerializeField] private float crouchAmount = 0.25f; 
+    private float gravity = -9.81f; 
     private float holdSpeed;
 
     public bool isIdle;
@@ -29,17 +29,14 @@ public class PlayerMovement : MonoBehaviour
     public float ambientIntensity = 0f;
     public float reflectionIntensity = .4f;
 
-    //private bool hasStamina = true;
-
     void Start()
     {
-       // FIX: Change this to different script!
-        RenderSettings.ambientIntensity = ambientIntensity; // Make it dark
-        RenderSettings.reflectionIntensity = reflectionIntensity; // Make it dark
+        RenderSettings.ambientIntensity = ambientIntensity; 
+        RenderSettings.reflectionIntensity = reflectionIntensity; 
 
 
         rb = GetComponent<Rigidbody>();
-        normalYLocalPosition = rb.transform.localScale.y; // Set normalYLocalPosition to be the rigidbody transforms localScale y 
+        normalYLocalPosition = rb.transform.localScale.y; 
         controller = gameObject.GetComponent<CharacterController>();
         holdSpeed = speed;
 
@@ -50,132 +47,123 @@ public class PlayerMovement : MonoBehaviour
 
     void Update()
     {
-       onGround = controller.isGrounded;
-       if (onGround && velocity.y < 0)
+      onGround = controller.isGrounded;
+
+      float horizontal = Input.GetAxis("Horizontal");
+      float vertical = Input.GetAxis("Vertical");
+
+      Vector3 move = (transform.right * horizontal + transform.forward * vertical).normalized;
+      if (move != Vector3.zero)
+      {
+        isIdle = false;
+        controller.Move(move * speed * Time.deltaTime);
+        animator.SetFloat("BlendSpeed", 0.5f, 0.1f, Time.deltaTime); 
+
+        if (!isRunning && !isCrouching)
         {
-           // velocity.y = 0f;
+          WalkAudio.enabled = true;
         }
 
-        float horizontal = Input.GetAxis("Horizontal");
-        float vertical = Input.GetAxis("Vertical");
-
-        
-        Vector3 move = (transform.right * horizontal + transform.forward * vertical).normalized;
-        if (move != Vector3.zero)
+        if (velocity.y > 0)
         {
-          isIdle = false;
-          controller.Move(move * speed * Time.deltaTime);
-          animator.SetFloat("BlendSpeed", 0.5f, 0.1f, Time.deltaTime); // Walk Animation
-
-          if (!isRunning && !isCrouching)
-          {
-            WalkAudio.enabled = true;
-          }
-
-          if (velocity.y > 0)
-          {
-            WalkAudio.enabled = false;
-            RunAudio.enabled = false;
-            CrouchAudio.enabled = false;
-          }
-
-        }
-        else
-        {
-          animator.SetFloat("BlendSpeed", 0f, 0.1f, Time.deltaTime); // Idle Animation
-          isIdle = true;
           WalkAudio.enabled = false;
           RunAudio.enabled = false;
           CrouchAudio.enabled = false;
         }
 
-        if (Input.GetKey(KeyCode.LeftShift)) // While player holds shift player can sprint
-        {
-            if(!isRunning &&  !isCrouching) // if player is not already running or crouching
-            {
-                speed = sprint; // set speed to sprint value
-                isRunning = true;
-            }
-            if (isRunning)
-            {
-              animator.SetFloat("BlendSpeed", 1f, 0.1f, Time.deltaTime); // Sprinting
-              WalkAudio.enabled = false;
-              CrouchAudio.enabled = false;
-              RunAudio.enabled = true;
-            }
-        }
-        if (Input.GetKeyUp(KeyCode.LeftShift)) // When player releases shift
-        {
-            speed = holdSpeed; // set speed back to normal
-            isRunning = false;
-            RunAudio.enabled = false;
-        }
+      }
+      else
+      {
+        animator.SetFloat("BlendSpeed", 0f, 0.1f, Time.deltaTime); 
+        isIdle = true;
+        WalkAudio.enabled = false;
+        RunAudio.enabled = false;
+        CrouchAudio.enabled = false;
+      }
 
-        if (Input.GetKey(KeyCode.LeftControl)) // CHANGE: to be letter C
-        {
-          if (!isCrouching)
+      if (Input.GetKey(KeyCode.LeftShift)) 
+      {
+          if(!isRunning &&  !isCrouching) 
           {
-            speed = crouchSpeed;
-            isCrouching = true;
+              speed = sprint; 
+              isRunning = true;
           }
-          if (isCrouching)
+          if (isRunning)
           {
+            animator.SetFloat("BlendSpeed", 1f, 0.1f, Time.deltaTime); 
             WalkAudio.enabled = false;
-            RunAudio.enabled = false;
-            CrouchAudio.enabled = true;
-            normalYLocalPosition = crouchAmount;
-            rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z); // Set our rigibodies transforms local scale to be a new Vector3 based on our localScale x
-          }
-        }
-        if (Input.GetKeyUp(KeyCode.LeftControl)) // When player releases control
-        {
-            speed = holdSpeed; // set speed back to normal
-            isCrouching = false;
             CrouchAudio.enabled = false;
-            normalYLocalPosition = yLocalPositionHolder;
-            rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z); // Set our rigibodies transforms local scale to be a new Vector3 based on our localScale x
-        }
-
-        if (onGround) //&& jumpCooldown == false) // player is on the ground
-        {
-          if (Input.GetKeyDown(KeyCode.Space)) 
-          {
-            animator.SetTrigger("Jump");
-            isIdle = false;
-            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity); // player jump
+            RunAudio.enabled = true;
           }
-        }
+      }
+      if (Input.GetKeyUp(KeyCode.LeftShift))
+      {
+          speed = holdSpeed; 
+          isRunning = false;
+          RunAudio.enabled = false;
+      }
 
-        Interact();
-
-        velocity.y += gravity * Time.deltaTime;
-        controller.Move(velocity * Time.deltaTime);
-        
-    }
-
-
-    public void Interact()
-    { 
-      if (Input.GetKeyDown(KeyCode.E))
-      { 
-        //animator.SetTrigger("Pickup");
-        animator.SetTrigger("Grabbing");
-        //animator.SetLayerWeight(animator.GetLayerIndex("Interact Layer"), 1);
-
-        if (inKeyRadius == true && Info.UtilityKey == false)
+      if (Input.GetKey(KeyCode.LeftControl))
+      {
+        if (!isCrouching)
         {
-          Info.UtilityKey = true;
-          Info.UtilityKeyMessage();
-          inKeyRadius = false;
+          speed = crouchSpeed;
+          isCrouching = true;
         }
-        else if (inKeyRadius == true && Info.UtilityKey == true)
+        if (isCrouching)
         {
-          Info.MasterKey = true;
-          Info.MasterKeyMessage();
-          inKeyRadius = false;
+          WalkAudio.enabled = false;
+          RunAudio.enabled = false;
+          CrouchAudio.enabled = true;
+          normalYLocalPosition = crouchAmount;
+          rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z); // Set rigibodies transforms local scale to be a new Vector3 based on our localScale x
         }
       }
+      if (Input.GetKeyUp(KeyCode.LeftControl)) 
+      {
+          speed = holdSpeed; 
+          isCrouching = false;
+          CrouchAudio.enabled = false;
+          normalYLocalPosition = yLocalPositionHolder;
+          rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z);
+      }
+
+      if (onGround)
+      {
+        if (Input.GetKeyDown(KeyCode.Space)) 
+        {
+          animator.SetTrigger("Jump");
+          isIdle = false;
+          velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+        }
+      }
+
+      Interact();
+      velocity.y += gravity * Time.deltaTime;
+      controller.Move(velocity * Time.deltaTime);
+      
+  }
+
+
+  public void Interact()
+  { 
+    if (Input.GetKeyDown(KeyCode.E))
+    { 
+      animator.SetTrigger("Grabbing");
+      if (inKeyRadius == true && Info.UtilityKey == false)
+      {
+        Info.UtilityKey = true;
+        Info.UtilityKeyMessage();
+        inKeyRadius = false;
+      }
+      else if (inKeyRadius == true && Info.UtilityKey == true)
+      {
+        Info.MasterKey = true;
+        Info.MasterKeyMessage();
+        inKeyRadius = false;
+      }
     }
+  }
 
 
 }

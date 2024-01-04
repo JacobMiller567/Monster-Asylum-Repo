@@ -7,7 +7,6 @@ public class KeyManager : MonoBehaviour
     [SerializeField] private GameObject[] Keys;
     private int randomKey;
 
-
     void Start()
     {
         randomKey = Random.Range(0, Keys.Length);

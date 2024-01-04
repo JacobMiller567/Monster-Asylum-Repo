@@ -5,17 +5,15 @@ using UnityEngine.AI;
 
 public class Doors : MonoBehaviour
 {
-   // [SerializeField] private bool locked;// = true;
-   // [SerializeField] private Transform player;
     [SerializeField] private bool MainDoor = false;
     [SerializeField] private bool RightSide = false;
-    private AudioSource UnlockSound; //TEST
+    private AudioSource UnlockSound; 
     private OffMeshLink MeshLink;
     [SerializeField] private MainMenu menu;
 
     void Start()
     {
-        gameObject.isStatic = false; // This will prevent door collider from only opening and not the mesh too!
+        gameObject.isStatic = false;
         UnlockSound = GetComponent<AudioSource>();
         MeshLink = GetComponent<OffMeshLink>();
         MeshLink.enabled = false;
@@ -31,7 +29,6 @@ public class Doors : MonoBehaviour
                 gameObject.transform.localRotation = Quaternion.Euler(0, -95, 0);
                 gameObject.GetComponent<BoxCollider>().enabled = false;
                 MeshLink.enabled = true;
-
             }
 
             else 
