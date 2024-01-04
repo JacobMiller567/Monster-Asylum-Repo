@@ -1,0 +1,312 @@
+using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.AI;
+
+[RequireComponent(typeof(NavMeshAgent))] //, typeof(AgentLinkMover)
+public class EnemyMovement : MonoBehaviour
+{
+    //// Big help with AI from Llama Academy: https://www.youtube.com/@LlamAcademy ////
+
+    public Transform Player;
+    public float UpdateRate = 0.1f;
+    private NavMeshAgent Agent;
+    public NavMeshTriangulation Triangulation;
+    public EnemyDetection DetectionCheck;
+   // private AgentLinkMover LinkMover;
+    [SerializeField] private Animator Animation;
+    [SerializeField] private AudioSource Audio;
+    [SerializeField] private Transform AttackZone;
+    [SerializeField] private GameObject JumpScareCamera;
+    [SerializeField] private GameObject PlayersMesh;
+    [SerializeField] private GameObject SecuritySystem;
+    [SerializeField] private GameObject GameCanvas;
+    [SerializeField] private AudioSource JumpScareAudio;
+    [SerializeField] private MainMenu Menu;
+
+    public EnemyState DefaultState;
+    private EnemyState _state;
+
+    public EnemyState State 
+    {
+        get 
+        {
+            return _state;
+        }
+        set 
+        {
+            OnStateChange?.Invoke(_state, value); // If state is not set
+            _state = value; 
+           // Debug.Log("Set State");
+        }
+    }
+
+    public delegate void StateChangeEvent(EnemyState oldState, EnemyState newState);
+    public StateChangeEvent OnStateChange;
+    public float IdleLocationRadius = 4f; // Random location from enemy while in idle state
+    public float sprintSpeed = 4f; // Speed of the enemy while in chase state
+    public float idleSpeed = 1.5f; // Speed of the enemy while in idle state
+    [SerializeField] private int waypointIndex = 0;
+    public Vector3[] Waypoints = new Vector3[6];
+    public bool MasterKeyFound = false;
+    private bool jumpScarePlayed = false;
+
+    private Coroutine FollowingCoroutine;
+
+    private void Awake()
+    {
+        Agent = GetComponent<NavMeshAgent>();
+        //LinkMover = GetComponent<AgentLinkMover>();
+        OnStateChange += StateChangeHandler;
+        /* // Used for jumping
+        LinkMover.OnLinkStart += LinkStartManager;
+        LinkMover.OnLinkEnd += LinkEndManager;
+        */
+
+        DetectionCheck.GainSight += GainSightHandler;
+        DetectionCheck.LoseSight += LoseSightHandler;
+    }
+
+
+    private void GainSightHandler(PlayerMovement player)
+    {
+        State = EnemyState.Chase; // Chase state
+        Agent.speed = sprintSpeed;
+        Animation.SetBool("Wander", false); // Set wander animation
+    }
+    private void LoseSightHandler(PlayerMovement player)
+    {
+        if (MasterKeyFound == false)
+        {
+            State = DefaultState; // Revert back to last state
+            Agent.speed = idleSpeed; // FIX: Change later
+            Animation.SetBool("Detected", false); // Set run animation
+            Animation.SetBool("Wander", true); // Set wander animation
+
+        }
+    }
+
+    private void OnDisable()
+    {
+        _state = DefaultState; // Set to default state
+    }
+
+    public void Spawn()
+    {
+        OnStateChange?.Invoke(EnemyState.Spawn, DefaultState);
+
+        /*
+        for (int i = 0; i < Waypoints.Length; i++)
+        {
+            NavMeshHit Hit;
+            
+            if (NavMesh.SamplePosition(Triangulation.vertices[Random.Range(0, Triangulation.vertices.Length)], out Hit, 2f, Agent.areaMask))
+            {
+                Waypoints[i] = Hit.position;
+            }
+            else
+            {
+                Debug.LogError("Unable to find position for navmesh near Triangulation vertex!");
+            }
+        }
+        OnStateChange?.Invoke(EnemyState.Spawn, DefaultState);
+        */
+        
+    }
+
+    public void Start() // Move to Spawner class if add new enemies
+    {
+        Triangulation = Triangulation; // TEST
+        Spawn();
+    }
+
+
+/*
+    private void LinkStartManager()
+    {
+        Animation.SetTrigger(Jump);
+    }
+    private void LinkEndManager()
+    {
+        Animation.SetTrigger(Landed);
+    }
+*/
+    private void StateChangeHandler(EnemyState oldState, EnemyState newState)
+    {
+        if (oldState != newState)
+        {
+            if (FollowingCoroutine != null)
+            {
+                StopCoroutine(FollowingCoroutine);
+            }
+            if (oldState == EnemyState.Idle)
+            {
+                Agent.speed = idleSpeed;
+            }
+            
+            switch (newState)
+            {
+                case EnemyState.Idle:
+                    Animation.SetBool("Wander", true); // Set wander animation
+                    FollowingCoroutine = StartCoroutine(IdleMotion());
+                    break;
+                case EnemyState.Patrol:
+                    FollowingCoroutine = StartCoroutine(PatrolMotion());
+                    break;
+                case EnemyState.Chase:
+                    FollowingCoroutine = StartCoroutine(FollowTarget());
+                    break;
+            }
+        }
+    }
+
+    private IEnumerator IdleMotion()
+    {
+        WaitForSeconds wait = new WaitForSeconds(UpdateRate);
+        Agent.speed = idleSpeed;
+
+        while (true) //gameObject.activeSelf
+        {
+            if (!Agent.enabled || !Agent.isOnNavMesh) // If our agent is active
+            {
+                yield return wait;
+            }
+            else if (Agent.remainingDistance <= Agent.stoppingDistance)
+            {
+                Vector2 point = Random.insideUnitCircle * IdleLocationRadius; // Random point in unity circle multiplied by our radius
+
+                NavMeshHit hit;
+
+                if (NavMesh.SamplePosition(Agent.transform.position + new Vector3(point.x, 0, point.y), out hit, 3f, Agent.areaMask)) //2f
+                {
+                    Audio.Play();
+                    Agent.SetDestination(hit.position);
+                }
+            }
+          //  Audio.Play();
+            yield return wait;
+        }
+    }
+
+    private IEnumerator PatrolMotion() // NOT USED
+    {
+        WaitForSeconds wait = new WaitForSeconds(UpdateRate);
+
+        yield return new WaitUntil(() => Agent.enabled && Agent.isOnNavMesh); // Wait till enemy is on the navmesh
+        Agent.SetDestination(Waypoints[waypointIndex]);
+
+        while (true)
+        {
+           if (Agent.isOnNavMesh && Agent.enabled && Agent.remainingDistance <= Agent.stoppingDistance)
+            {
+                waypointIndex++; // Change waypoint
+            } 
+
+            if (waypointIndex >= Waypoints.Length)
+            {
+                waypointIndex = 0; // Reset to inital waypoint
+            }
+
+            Agent.SetDestination(Waypoints[waypointIndex]);
+        }
+        yield return wait;
+    }
+
+    private IEnumerator FollowTarget()
+    {
+        WaitForSeconds wait = new WaitForSeconds(UpdateRate);
+
+        while (true) //gameObject.activeSelf
+        {
+            if (Agent.enabled) // If our agent is active
+            {
+                Agent.SetDestination(Player.transform.position); // Follow player
+                Animation.SetBool("Detected", true); // Set run animation
+
+                if ((Player.transform.position - AttackZone. transform.position).sqrMagnitude < 1.65f && jumpScarePlayed == false)
+                {
+                    Debug.Log("Kill");
+                    JumpScare();
+                    yield return false;                   
+                }
+            }
+            yield return wait;
+        }
+    }
+
+
+    private void JumpScare()
+    {
+        //Animation.SetTrigger("Attack");
+        Animation.SetBool("Caught", true);
+        JumpScareAudio.Play();
+        SecuritySystem.SetActive(false); // Hides camera view if player is using security cameras
+        PlayersMesh.SetActive(false); // Hide players mesh
+        GameCanvas.SetActive(false); // Hide all text pop-ups and menus
+        JumpScareCamera.SetActive(true);
+        jumpScarePlayed = true;
+        StartCoroutine(ReturnToMenu());
+    }
+
+
+    private void OnDrawGizmosSelected()
+    {
+        for (int i = 0; i < Waypoints.Length; i++)
+        {
+            Gizmos.DrawWireSphere(Waypoints[i], 0.25f);
+            if (i + 1 < Waypoints.Length)
+            {
+                Gizmos.DrawLine(Waypoints[i], Waypoints[i + 1]);
+            }
+            else
+            {
+                Gizmos.DrawLine(Waypoints[i], Waypoints[0]); 
+            }
+        }
+    }
+
+
+
+    public void IncreaseEnemyDifficulty()
+    {
+        idleSpeed = 2f; // Increase of 0.5 after first key is found
+        Debug.Log("Enemy has grown faster");
+        if (State == EnemyState.Idle) // If enemy is wandering
+        {
+            Agent.speed = idleSpeed; // Update new speed
+        }
+    }
+
+    public void BeginHunt()
+    {
+        State = EnemyState.Hunt;
+        Agent.speed = sprintSpeed;
+        StartCoroutine(HuntTarget());
+    }
+
+    private IEnumerator HuntTarget()
+    {
+        WaitForSeconds Wait = new WaitForSeconds(UpdateRate);
+        while(true)
+        {
+            if (Agent.enabled)
+            {
+                Agent.SetDestination(Player.transform.position);
+                Animation.SetBool("Detected", true);
+            }
+            yield return Wait;
+        }
+    }
+
+
+    private IEnumerator ReturnToMenu()
+    {
+        yield return new WaitForSeconds(3f);
+        Cursor.lockState = CursorLockMode.None;
+        Menu.Menu();
+    }
+
+
+
+    
+}
