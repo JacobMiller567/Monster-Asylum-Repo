@@ -1,22 +1,37 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 
 public class GameQuality : MonoBehaviour
 {
-    private bool highQuality = true;
-
-    public void DecreaseQuality()
+    public void ChangeGameQuality(TMP_Dropdown option)
     {
-        if (highQuality == true)
+        switch (option.value)
         {
-            QualitySettings.SetQualityLevel(2);
-            highQuality = false;
+            case 0:
+                MediumQuality();
+                break;
+            case 1:
+                HighQuality();
+                break;
+            case 2:
+                LowQuality();
+                break;
         }
-        else
-        {
-            QualitySettings.SetQualityLevel(6);
-            highQuality = true;  
-        }
+    }
+    private void MediumQuality()
+    {
+        QualitySettings.SetQualityLevel(3);
+    }
+    private void HighQuality()
+    {
+        QualitySettings.SetQualityLevel(5);
+    }
+    private void LowQuality()
+    {
+        QualitySettings.SetQualityLevel(1);
     }
 }
