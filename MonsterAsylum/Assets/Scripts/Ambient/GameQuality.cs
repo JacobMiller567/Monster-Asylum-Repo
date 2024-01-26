@@ -7,6 +7,15 @@ using TMPro;
 
 public class GameQuality : MonoBehaviour
 {
+    public float ambientIntensity = 0f;
+    public float reflectionIntensity = .4f;
+
+    private void Start()
+    {
+        RenderSettings.ambientIntensity = ambientIntensity;
+        RenderSettings.reflectionIntensity = reflectionIntensity;
+    }
+
     public void ChangeGameQuality(TMP_Dropdown option)
     {
         switch (option.value)

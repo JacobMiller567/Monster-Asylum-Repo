@@ -26,15 +26,9 @@ public class PlayerMovement : MonoBehaviour
     private Rigidbody rb;
     private float normalYLocalPosition = 1;
     private float yLocalPositionHolder = 1;
-    public float ambientIntensity = 0f;
-    public float reflectionIntensity = .4f;
 
     void Start()
     {
-        RenderSettings.ambientIntensity = ambientIntensity; 
-        RenderSettings.reflectionIntensity = reflectionIntensity; 
-
-
         rb = GetComponent<Rigidbody>();
         normalYLocalPosition = rb.transform.localScale.y; 
         controller = gameObject.GetComponent<CharacterController>();

@@ -14,6 +14,15 @@ public class SecuritySystem : MonoBehaviour
     [SerializeField] private GameObject textPopup;
     public Camera PlayerView;
 
+
+    void Awake() // Reduces lag caused by cameras!
+    {
+        SecurityCameras[0].SetActive(false);
+        SecurityCameras[1].SetActive(false);
+        SecurityCameras[2].SetActive(false);
+        SecurityCameras[3].SetActive(false);
+    }
+
     void OnTriggerEnter(Collider other)
     {
         if (other.gameObject.CompareTag("Player"))
@@ -44,6 +53,11 @@ public class SecuritySystem : MonoBehaviour
     {    
         PlayerCamera.SetActive(true);
         ZoomCamera.SetActive(false);
+
+        SecurityCameras[0].SetActive(false);
+        SecurityCameras[1].SetActive(false);
+        SecurityCameras[2].SetActive(false);
+        SecurityCameras[3].SetActive(false);
     }
 
     IEnumerator UpdateCameras()
