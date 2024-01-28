@@ -14,6 +14,7 @@ public class GameQuality : MonoBehaviour
     {
         RenderSettings.ambientIntensity = ambientIntensity;
         RenderSettings.reflectionIntensity = reflectionIntensity;
+       
     }
 
     public void ChangeGameQuality(TMP_Dropdown option)

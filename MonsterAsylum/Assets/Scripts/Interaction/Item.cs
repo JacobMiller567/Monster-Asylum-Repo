@@ -38,6 +38,7 @@ public class Item : MonoBehaviour
                     if (Player.GetComponent<PlayerInfo>().UtilityKey == true)
                     {
                         InteractText.SetActive(false);
+                        Player.GetComponent<PlayerMovement>().inKeyRadius = false;
                         Destroy(gameObject);
                     }
                 }
