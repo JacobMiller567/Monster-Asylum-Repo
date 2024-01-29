@@ -24,6 +24,7 @@ public class PlayerMovement : MonoBehaviour
     public bool inKeyRadius = false;
     [SerializeField] private PlayerInfo Info;
     [SerializeField] private AudioSource WalkAudio, RunAudio, CrouchAudio;
+    public AudioSource heartBeat;
     private Rigidbody rb;
     private float normalYLocalPosition = 1;
     private float yLocalPositionHolder = 1;

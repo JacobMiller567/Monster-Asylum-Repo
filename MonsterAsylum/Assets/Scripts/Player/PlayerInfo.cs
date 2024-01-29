@@ -6,6 +6,8 @@ using TMPro;
 
 public class PlayerInfo : MonoBehaviour
 {
+
+    public static PlayerInfo instance;
     public bool UtilityKey = false;
     public bool MasterKey = false;
     [SerializeField] private GameObject UtilityText;

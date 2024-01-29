@@ -64,7 +64,8 @@ public class EnemyMovement : MonoBehaviour
     {
         State = EnemyState.Chase; 
         Agent.speed = sprintSpeed;
-        Animation.SetBool("Wander", false); 
+        Animation.SetBool("Wander", false);
+        player.heartBeat.Play();
     }
     private void LoseSightHandler(PlayerMovement player)
     {
@@ -73,7 +74,8 @@ public class EnemyMovement : MonoBehaviour
             State = DefaultState; // Revert back to last state
             Agent.speed = idleSpeed; 
             Animation.SetBool("Detected", false); 
-            Animation.SetBool("Wander", true); 
+            Animation.SetBool("Wander", true);
+            player.heartBeat.Stop();
         }
     }
 
@@ -186,7 +188,8 @@ public class EnemyMovement : MonoBehaviour
             if (Agent.enabled) 
             {
                 Agent.SetDestination(Player.transform.position); 
-                Animation.SetBool("Detected", true); 
+                Animation.SetBool("Detected", true);
+                
                 if ((Player.transform.position - AttackZone. transform.position).sqrMagnitude < 1.65f && jumpScarePlayed == false)
                 {
                     JumpScare();
