@@ -44,7 +44,7 @@ public class EnemyMovement : MonoBehaviour
     public float IdleLocationRadius = 4f; // Random location from enemy while in idle state
     public float sprintSpeed = 4f; 
     public float idleSpeed = 1.5f; 
-    //[SerializeField] private int waypointIndex = 0;
+    [SerializeField] private int waypointIndex = 0;
     public Vector3[] Waypoints = new Vector3[6];
     public bool MasterKeyFound = false;
     private bool jumpScarePlayed = false;
@@ -113,12 +113,11 @@ public class EnemyMovement : MonoBehaviour
                 case EnemyState.Idle:
                     Animation.SetBool("Wander", true);
                     FollowingCoroutine = StartCoroutine(IdleMotion());
-                    break;
-                    /*
+                    break;   
                 case EnemyState.Patrol:
                     FollowingCoroutine = StartCoroutine(PatrolMotion());
                     break;
-                    */
+                    
                 case EnemyState.Chase:
                     FollowingCoroutine = StartCoroutine(FollowTarget());
                     break;
@@ -153,8 +152,8 @@ public class EnemyMovement : MonoBehaviour
         }
     }
 
-/*
-    private IEnumerator PatrolMotion() // NOT USED (WIP)
+
+    private IEnumerator PatrolMotion() 
     {
         WaitForSeconds wait = new WaitForSeconds(UpdateRate);
 
@@ -174,10 +173,10 @@ public class EnemyMovement : MonoBehaviour
             }
 
             Agent.SetDestination(Waypoints[waypointIndex]);
+            yield return wait;
         }
-        yield return wait;
     }
-*/
+
 
     private IEnumerator FollowTarget()
     {

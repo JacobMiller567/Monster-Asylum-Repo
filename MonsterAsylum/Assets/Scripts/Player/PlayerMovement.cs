@@ -7,19 +7,26 @@ public class PlayerMovement : MonoBehaviour
 {
     [SerializeField] private Animator animator;
     [SerializeField] private CharacterController controller;
+    [SerializeField] private GameObject blurEffect;
     private Vector3 velocity;
     [SerializeField] private float speed = 6.5f;
     [SerializeField] private float jumpHeight = 4f;
     [SerializeField] private float sprint = 10f;
     [SerializeField] private float crouchSpeed = 2.5f;
     [SerializeField] private float crouchAmount = 0.25f; 
+    [SerializeField] private float maxStamina = 100f;
+    [SerializeField] private float staminaRegenRate = 12f;
+    [SerializeField] private float staminaCost = 25f;
+    [SerializeField] private float staminaExhaustPenalty = 4.5f;
     private float gravity = -9.81f; 
     private float holdSpeed;
+    public float currentStamina; // private
 
     public bool isIdle;
     private bool isRunning;
     private bool isCrouching;
     private bool onGround;
+    private bool onStaminaCooldown;
 
     public bool inKeyRadius = false;
     [SerializeField] private PlayerInfo Info;
@@ -35,10 +42,12 @@ public class PlayerMovement : MonoBehaviour
         normalYLocalPosition = rb.transform.localScale.y; 
         controller = gameObject.GetComponent<CharacterController>();
         holdSpeed = speed;
+        currentStamina = maxStamina;
 
         WalkAudio.enabled = false;
         RunAudio.enabled = false;
         CrouchAudio.enabled = false;
+
     }
 
     void Update()
@@ -58,6 +67,14 @@ public class PlayerMovement : MonoBehaviour
         if (!isRunning && !isCrouching)
         {
           WalkAudio.enabled = true;
+
+          /*
+          if (currentStamina < maxStamina)//&& !onCooldown) // TEST with cooldown
+            {
+                currentStamina += staminaRegenRate * Time.deltaTime;
+                currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+            }
+            */
         }
 
         if (velocity.y > 0)
@@ -75,10 +92,17 @@ public class PlayerMovement : MonoBehaviour
         WalkAudio.enabled = false;
         RunAudio.enabled = false;
         CrouchAudio.enabled = false;
+
+        if (currentStamina < maxStamina)// TEST
+        {
+            currentStamina += (staminaRegenRate + 3f) * Time.deltaTime;
+            currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+        }
       }
 
-      if (Input.GetKey(KeyCode.LeftShift)) 
+      if (Input.GetKey(KeyCode.LeftShift) && currentStamina > 0 && !onStaminaCooldown) 
       {
+          currentStamina -= staminaCost * Time.deltaTime; // TEST
           if(!isRunning &&  !isCrouching) 
           {
               speed = sprint; 
@@ -123,6 +147,17 @@ public class PlayerMovement : MonoBehaviour
           normalYLocalPosition = yLocalPositionHolder;
           rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z);
       }
+      if (currentStamina < maxStamina)//TEST
+      {
+          currentStamina += staminaRegenRate * Time.deltaTime;
+          currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+      }
+
+      if (currentStamina <= 0 && !onStaminaCooldown) // TEST
+      {
+          onStaminaCooldown = true;
+          StartCoroutine(StaminaCooldown());
+      }
 
       if (onGround)
       {
@@ -159,6 +194,15 @@ public class PlayerMovement : MonoBehaviour
         inKeyRadius = false;
       }
     }
+  }
+
+  private IEnumerator StaminaCooldown() // TEST
+  {
+    //NoStaminaAudio.Play();
+    blurEffect.SetActive(true);
+    yield return new WaitForSeconds(staminaExhaustPenalty);
+    onStaminaCooldown = false;
+    blurEffect.SetActive(false);
   }
 
 
