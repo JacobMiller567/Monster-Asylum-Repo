@@ -27,6 +27,7 @@ public class PlayerMovement : MonoBehaviour
     private bool isCrouching;
     private bool onGround;
     private bool onStaminaCooldown;
+    public bool isHiding = false;
 
     public bool inKeyRadius = false;
     [SerializeField] private PlayerInfo Info;
@@ -58,7 +59,7 @@ public class PlayerMovement : MonoBehaviour
       float vertical = Input.GetAxis("Vertical");
 
       Vector3 move = (transform.right * horizontal + transform.forward * vertical).normalized;
-      if (move != Vector3.zero)
+      if (move != Vector3.zero && !isHiding)
       {
         isIdle = false;
         controller.Move(move * speed * Time.deltaTime);
@@ -93,79 +94,84 @@ public class PlayerMovement : MonoBehaviour
         RunAudio.enabled = false;
         CrouchAudio.enabled = false;
 
-        if (currentStamina < maxStamina)// TEST
+        if (currentStamina < maxStamina)
         {
             currentStamina += (staminaRegenRate + 3f) * Time.deltaTime;
             currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
         }
       }
 
-      if (Input.GetKey(KeyCode.LeftShift) && currentStamina > 0 && !onStaminaCooldown) 
+      if (!isHiding)
       {
-          currentStamina -= staminaCost * Time.deltaTime; // TEST
-          if(!isRunning &&  !isCrouching) 
+          if (Input.GetKey(KeyCode.LeftShift) && currentStamina > 0 && !onStaminaCooldown) 
           {
-              speed = sprint; 
-              isRunning = true;
+            currentStamina -= staminaCost * Time.deltaTime;
+            if(!isRunning &&  !isCrouching) 
+            {
+                speed = sprint; 
+                isRunning = true;
+            }
+            if (isRunning)
+            {
+              animator.SetFloat("BlendSpeed", 1f, 0.1f, Time.deltaTime); 
+              WalkAudio.enabled = false;
+              CrouchAudio.enabled = false;
+              RunAudio.enabled = true;
+            }
+        }
+        if (Input.GetKeyUp(KeyCode.LeftShift))
+        {
+            speed = holdSpeed; 
+            isRunning = false;
+            RunAudio.enabled = false;
+        }
+
+        if (Input.GetKey(KeyCode.LeftControl))
+        {
+          if (!isCrouching)
+          {
+            speed = crouchSpeed;
+            isCrouching = true;
           }
-          if (isRunning)
+          if (isCrouching)
           {
-            animator.SetFloat("BlendSpeed", 1f, 0.1f, Time.deltaTime); 
             WalkAudio.enabled = false;
-            CrouchAudio.enabled = false;
-            RunAudio.enabled = true;
+            RunAudio.enabled = false;
+            CrouchAudio.enabled = true;
+            normalYLocalPosition = crouchAmount;
+            rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z); // Set rigibodies transforms local scale to be a new Vector3 based on our localScale x
           }
-      }
-      if (Input.GetKeyUp(KeyCode.LeftShift))
-      {
-          speed = holdSpeed; 
-          isRunning = false;
-          RunAudio.enabled = false;
-      }
-
-      if (Input.GetKey(KeyCode.LeftControl))
-      {
-        if (!isCrouching)
-        {
-          speed = crouchSpeed;
-          isCrouching = true;
         }
-        if (isCrouching)
+        if (Input.GetKeyUp(KeyCode.LeftControl)) 
         {
-          WalkAudio.enabled = false;
-          RunAudio.enabled = false;
-          CrouchAudio.enabled = true;
-          normalYLocalPosition = crouchAmount;
-          rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z); // Set rigibodies transforms local scale to be a new Vector3 based on our localScale x
+            speed = holdSpeed; 
+            isCrouching = false;
+            CrouchAudio.enabled = false;
+            normalYLocalPosition = yLocalPositionHolder;
+            rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z);
         }
-      }
-      if (Input.GetKeyUp(KeyCode.LeftControl)) 
-      {
-          speed = holdSpeed; 
-          isCrouching = false;
-          CrouchAudio.enabled = false;
-          normalYLocalPosition = yLocalPositionHolder;
-          rb.transform.localScale = new Vector3(rb.transform.localScale.x, normalYLocalPosition, rb.transform.localScale.z);
-      }
-      if (currentStamina < maxStamina)//TEST
-      {
-          currentStamina += staminaRegenRate * Time.deltaTime;
-          currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
-      }
-
-      if (currentStamina <= 0 && !onStaminaCooldown) // TEST
-      {
-          onStaminaCooldown = true;
-          StartCoroutine(StaminaCooldown());
-      }
-
-      if (onGround)
-      {
-        if (Input.GetKeyDown(KeyCode.Space)) 
+        if (currentStamina < maxStamina)
         {
-          animator.SetTrigger("Jump");
-          isIdle = false;
-          velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            currentStamina += staminaRegenRate * Time.deltaTime;
+            currentStamina = Mathf.Clamp(currentStamina, 0f, maxStamina);
+        }
+
+        if (currentStamina <= 0 && !onStaminaCooldown) 
+        {
+            speed = holdSpeed;
+
+            onStaminaCooldown = true;
+            StartCoroutine(StaminaCooldown());
+        }
+
+        if (onGround)
+        {
+          if (Input.GetKeyDown(KeyCode.Space)) 
+          {
+            animator.SetTrigger("Jump");
+            isIdle = false;
+            velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+          }
         }
       }
 
@@ -176,7 +182,7 @@ public class PlayerMovement : MonoBehaviour
   }
 
 
-  public void Interact()
+  public void Interact() // FIX? Might be causing lag
   { 
     if (Input.GetKeyDown(KeyCode.E))
     { 
@@ -193,10 +199,31 @@ public class PlayerMovement : MonoBehaviour
         Info.MasterKeyMessage();
         inKeyRadius = false;
       }
+/*
+      if (isHiding) // TEST
+      {
+        isHiding = false;
+        //ChangePosition(LastLocation(), transform.rotation);
+      }
+*/
     }
   }
 
-  private IEnumerator StaminaCooldown() // TEST
+  public Vector3 LastLocation()
+  {
+    return transform.position;
+  }
+  public void ChangePosition(Vector3 pos, Quaternion rot)//, Quaternion rot) // TEST
+  {
+    controller.enabled = false;
+    transform.position = pos;
+    transform.rotation = rot;
+    //transform.rotation = Quaternion.Euler(0f, 0f, 0f);
+    controller.enabled = true;
+    isHiding = !isHiding;
+  }
+
+  private IEnumerator StaminaCooldown() 
   {
     //NoStaminaAudio.Play();
     blurEffect.SetActive(true);

@@ -14,14 +14,22 @@ public class Dialogue : MonoBehaviour
     {
         if (other.gameObject.CompareTag("Player") && !textWasDisplayed)
         {
+            DialogueManager.Instance.DisplayNextDialogue();
             dialogueText.SetActive(true);
             textWasDisplayed = true;
-            Destroy(dialogueText, destroyTime);
+            StartCoroutine(HideDialogue()); // TEST
+            //Destroy(dialogueText, destroyTime);
 
             if (isMainDoor == false)
             {
-                Destroy(gameObject, destroyTime + 0.5f);
+                //Destroy(gameObject, destroyTime + 0.5f);
             }
         }
+    }
+
+    IEnumerator HideDialogue()
+    {
+        yield return new WaitForSeconds(destroyTime);
+        dialogueText.SetActive(false);
     }
 }

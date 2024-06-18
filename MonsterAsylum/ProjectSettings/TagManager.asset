@@ -10,6 +10,9 @@ TagManager:
   - Ground
   - Door
   - MainDoor
+  - Documents
+  - Hideable
+  - JumpScare
   layers:
   - Default
   - TransparentFX
@@ -21,7 +24,7 @@ TagManager:
   - Body
   - Ignore
   - EnemyAttack
-  - 
+  - Ceiling
   - 
   - 
   - 

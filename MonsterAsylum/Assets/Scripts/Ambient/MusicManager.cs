@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
+using TMPro;
 
 public class MusicManager : MonoBehaviour
 {
@@ -11,14 +12,8 @@ public class MusicManager : MonoBehaviour
     private AudioSource musicAudio;
     public Slider musicSlider;
     public float musicSliderValue;
-    private bool playSound = true;
+    private bool gameSoundEnabled = true;
     private bool active = false;
-
-    // Game Sounds //
-    [SerializeField] Toggle playerFootsteps;
-    [SerializeField] Toggle jumpScare;
-    [SerializeField] Toggle enemyNoise;
-    [SerializeField] Toggle gameSound;
 
     // Gameplay //
     [SerializeField] Toggle lightFlicker;
@@ -31,11 +26,22 @@ public class MusicManager : MonoBehaviour
     [SerializeField] AudioClip enemySniff;
     [SerializeField] AudioClip unlockDoor;
     [SerializeField] AudioClip pickupKeys;
+    [SerializeField] AudioClip playerHeartBeat;
+    [SerializeField] AudioClip pickupNote;
+    [SerializeField] AudioClip keypadClick;
+    [SerializeField] AudioClip wrongInput;
+    [SerializeField] AudioClip correctInput;
+
+
+    [SerializeField] private AudioClip[] gameSounds;
+    [SerializeField] private float[] gameVolumeDefault;
+
 
 
     private void Start()
     {
         musicAudio = GetComponent<AudioSource>();
+       // SetDefaultVolume(); 
         StartCoroutine(PlayAudioSequentially());
     }
 
@@ -59,6 +65,7 @@ public class MusicManager : MonoBehaviour
             active = true;
             Time.timeScale = 0;
             Cursor.lockState = CursorLockMode.None;
+            //MuteAllSounds(1);
 
         }
         else if (Input.GetKeyDown(KeyCode.Escape) && active == true) 
@@ -67,6 +74,7 @@ public class MusicManager : MonoBehaviour
             active = false;
             Time.timeScale = 1;
             Cursor.lockState = CursorLockMode.Locked;
+           // MuteAllSounds(0);
         }
     }
 
@@ -77,81 +85,102 @@ public class MusicManager : MonoBehaviour
     }
 
 
-
-    public void FootStepsToggle()
+/*
+    public void SetDefaultVolume() // Set initial game volume
     {
-        if (playSound)
+        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audioSource in audioSources)
         {
-            if (playerFootsteps.isOn == false) 
+            for (int i = 0; i < gameSounds.Length; i++)
             {
-                MuteFootsteps(true);  
+                audioSource.volume = gameVolumeDefault[i];
             }
-
-            else 
-            {
-                MuteFootsteps(false);
-            }
-        } 
+        }
 
     }
-    public void JumpScareToggle() 
+    public void LoadDefaultVolume() // Reset game volume back to default
     {
-        if (playSound)
+        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audioSource in audioSources)
         {
-            if (jumpScare.isOn == false) 
+            for (int i = 0; i < gameSounds.Length; i++)
             {
-                MuteJumpScare(true);                    
-            }
-            else
-            {
-                MuteJumpScare(false);
+                audioSource.volume = gameVolumeDefault[i];
             }
         }
     }
-    public void EnemyNoiseToggle()
+    public void AdjustGameVolume() // Adjust game volume
     {
-        if (playSound)
+        gameSoundSliderValue = gameSoundSlider.value;
+
+        for (int i = 0; i < gunSounds.Length; i++)
         {
-            if (enemyNoise.isOn == false) 
+            gunSounds[i].volume = gameSoundSliderValue;
+        }
+        for (int i = 0; i < playerSounds.Length; i++)
+        {
+            playerSounds[i].volume = gameSoundSliderValue;
+        }
+        for (int i = 0; i < zombieSounds.Length; i++)
+        {
+            zombieSounds[i].volume = gameSoundSliderValue;
+        }
+    }
+*/
+
+
+    public void MuteFootsteps(TMP_Dropdown dropdown)
+    {
+        bool isMuted = dropdown.value == 1;
+        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audioSource in audioSources)
+        {
+            if (!gameSoundEnabled) return;
+            
+            if (audioSource.clip == stepsWalk)
             {
-                MuteEnemy(true);                    
+                audioSource.mute = isMuted;
             }
-
-            else
+            if (audioSource.clip == stepsRun)
             {
-                MuteEnemy(false);
+                audioSource.mute = isMuted;
+            }
+            if (audioSource.clip == stepsCrouch)
+            {
+                audioSource.mute = isMuted;
             }
         }
     }
-    public void MuteAllSoundsToggle()
-    {
-        if (gameSound.isOn == false) 
-        {
-            playSound = false;
-            MuteAllSounds(true);                    
-        }
 
-        else
-        {
-            playSound = true;
-            MuteAllSounds(false);
-        }
-    }
-    public void DisableLightFlickerToggle()
+    public void MuteJumpScare(TMP_Dropdown dropdown)
     {
-        if (lightFlicker.isOn == false) 
+        bool isMuted = dropdown.value == 1;
+        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audioSource in audioSources)
         {
-            DisableLightFlicker(true);                    
-        }
-
-        else
-        {
-            DisableLightFlicker(false);
+            if (audioSource.clip == jumpScareNoise)
+            {
+                audioSource.mute = isMuted;
+            }
         }
     }
 
-
-    public void MuteFootsteps(bool muted)
+    public void MuteEnemy(bool muted)
+    {
+        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audioSource in audioSources)
+        {
+            if (audioSource.clip == enemySniff)
+            {
+                audioSource.mute = muted;
+            }
+            if (audioSource.clip == jumpScareNoise)
+            {
+                audioSource.mute = muted;
+            }
+        }
+    }
+    public void MutePlayer(bool muted)
     {
         AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
         foreach (AudioSource audioSource in audioSources)
@@ -168,47 +197,14 @@ public class MusicManager : MonoBehaviour
             {
                 audioSource.mute = muted;
             }
-        }
-    }
-
-    public void MuteJumpScare(bool muted)
-    {
-        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
-        foreach (AudioSource audioSource in audioSources)
-        {
-            if (audioSource.clip == jumpScareNoise)
+            if (!audioSource.clip == playerHeartBeat)
             {
                 audioSource.mute = muted;
             }
         }
     }
 
-    public void MuteEnemy(bool muted)
-    {
-        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
-        foreach (AudioSource audioSource in audioSources)
-        {
-            if (audioSource.clip == enemySniff)
-            {
-                audioSource.mute = muted;
-            }
-        }
-    }
-
-
-    public void MuteDoor(bool muted)
-    {
-        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
-        foreach (AudioSource audioSource in audioSources)
-        {
-            if (audioSource.clip == unlockDoor)
-            {
-                audioSource.mute = muted;
-            }
-        }
-    }
-
-    public void MuteKeys(bool muted)
+    public void MuteInteraction(bool muted)
     {
         AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
         foreach (AudioSource audioSource in audioSources)
@@ -217,16 +213,54 @@ public class MusicManager : MonoBehaviour
             {
                 audioSource.mute = muted;
             }
+            if (audioSource.clip == pickupNote)
+            {
+                audioSource.mute = muted;
+            }
+            if (audioSource.clip == unlockDoor)
+            {
+                audioSource.mute = muted;
+            }
         }
     }
 
-    public void MuteAllSounds(bool muted)
+    public void MuteCombination(bool muted)
     {
-        MuteKeys(muted);
-        MuteDoor(muted);
-        MuteEnemy(muted);
-        MuteJumpScare(muted);
-        MuteFootsteps(muted);
+        AudioSource[] audioSources = FindObjectsOfType<AudioSource>();
+        foreach (AudioSource audioSource in audioSources)
+        {
+            if (audioSource.clip == keypadClick)
+            {
+                audioSource.mute = muted;
+            }
+            if (audioSource.clip == correctInput)
+            {
+                audioSource.mute = muted;
+            }
+            if (audioSource.clip == wrongInput)
+            {
+                audioSource.mute = muted;
+            }
+        }
+    }
+
+
+
+    public void MuteAllSounds(TMP_Dropdown dropdown)
+    {
+        bool isMuted = dropdown.value == 1;
+        if (isMuted == true)
+        {
+            gameSoundEnabled = false;
+        }
+        else
+        {
+            gameSoundEnabled = true;
+        }
+        MuteInteraction(isMuted);
+        MuteEnemy(isMuted);
+        MutePlayer(isMuted);
+        MuteCombination(isMuted);
     }
 
     public void DisableLightFlicker(bool on)

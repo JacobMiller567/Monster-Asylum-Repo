@@ -145,6 +145,7 @@ public class EnemyMovement : MonoBehaviour
                 if (NavMesh.SamplePosition(Agent.transform.position + new Vector3(point.x, 0, point.y), out hit, 3f, Agent.areaMask))
                 {
                     Audio.Play();
+                    //Animation.SetTrigger("Search");
                     Agent.SetDestination(hit.position);
                 }
             }
@@ -162,14 +163,14 @@ public class EnemyMovement : MonoBehaviour
 
         while (true)
         {
-           if (Agent.isOnNavMesh && Agent.enabled && Agent.remainingDistance <= Agent.stoppingDistance)
+            if (Agent.isOnNavMesh && Agent.enabled && Agent.remainingDistance <= Agent.stoppingDistance)
             {
-                waypointIndex++; // Change waypoint
+                waypointIndex++; 
             } 
 
             if (waypointIndex >= Waypoints.Length)
             {
-                waypointIndex = 0; // Reset to inital waypoint
+                waypointIndex = 0; 
             }
 
             Agent.SetDestination(Waypoints[waypointIndex]);
@@ -210,7 +211,6 @@ public class EnemyMovement : MonoBehaviour
         jumpScarePlayed = true;
         StartCoroutine(ReturnToMenu());
     }
-
 
     private void OnDrawGizmosSelected() // Used in editor to show enemies next movement
     {
